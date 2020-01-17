@@ -4,10 +4,10 @@ The goal of XRF is to ...
 
 ## Installation
 
-You can install the released version of XRF from [CRAN](https://CRAN.R-project.org) with:
+You can install the released version of XRF from [github](https://github.com/heddaost/XRF) with:
 
 ``` r
-install.packages("XRF")
+devtools::install_github("heddaost/XRF")
 ```
 
 ## Example
@@ -15,6 +15,6 @@ install.packages("XRF")
 This is a basic example which shows you how to solve a common problem:
 
 ``` r
-## basic example code
+read_XRF(datapath = "data/Test.TXT",  infopath = "data/Infofile.xlsx",
+           setuppath = "data/xrf_setup.xlsx", year = "2019")
 ```
-

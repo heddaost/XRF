@@ -1,21 +1,9 @@
-####from script to function####
-#Set working directory or make project
-#setwd("~/Desktop/R_XRF/R_XRF_comproject/XRF package")
-#Issues;
-#Is it ok to load the packages used inside the function?
-#Names of important files must be the same! (can I refer to it in function insted? better?)
-#- in each project you have to make a folder where the files have the same names..best solution?
-#Files; XRFdata.TXT, Infofile.xlsx, xrf_setup.xlsx
-# Should pivot wider be in function? (where should the code end?)
-#Extra functions must be after..
-#Drift; the date should be possible to choose in my package! - and people can include in the infofile when needed!
-
 #' import xrf data
 #'
 #' @param datapath name of my XRFdata.TXT file
 #' @param infopath name of my Infofile.xlsx file
 #' @param setuppath name of xrf_setup.xlsx file
-#' @param year yeat the drift was measured
+#' @param year year the drift was measured
 #' @importFrom readr read_delim locale
 #' @importFrom dplyr %>% select starts_with rename_all
 #' @importFrom dplyr inner_join anti_join filter group_by summarise mutate left_join
@@ -24,21 +12,23 @@
 #' @importFrom stringr str_remove
 #' @importFrom rlang .data
 #' @examples
-#' \dontrun {
-#'   read_XRF(datapath = "data/Test.TXT",  infopath = "data/Infofile.xlsx",
-#'            setuppath = "data/xrf_setup.xlsx", year = "2019")
-#' }
+#' datadir <- system.file("extdata", package = "XRF")
+#'   read_XRF(datapath = file.path(datadir, "xrf_rawdata.TXT"),
+#'            infopath = file.path(datadir,"project_info.xlsx"),
+#'            setuppath = file.path(datadir,"xrf_setup.xlsx"),
+#'            year = "2019")
 #' @export
 
 #My function;
 read_XRF <- function(datapath, infopath, setuppath, year){
-  datafile.df <- read_delim(datapath, delim = '\t', locale = locale(decimal_mark = ","))
-  datafile.df <- datafile.df %>%
-    select(-(3:18)) %>%
-    select(-starts_with("X")) %>%
-    rename_all(str_remove, pattern = " .*")
+  area_filter <- 9.078935
 
-  infofile.df <- read_excel(infopath)
+  #read datafile
+  datafile.df <- read_datapath_XRF(datapath = datapath)
+
+  #read infofile
+  infofile.df <- read_infopath_XRF(infopath = infopath)
+
   projectfile.df <-  inner_join(datafile.df, infofile.df, by = 'Sample')
   notinprojectfile.df <-  anti_join(datafile.df, infofile.df, by = 'Sample')
   if(nrow(notinprojectfile.df)>0){
@@ -52,7 +42,7 @@ read_XRF <- function(datapath, infopath, setuppath, year){
                  values_to = 'Value')
   mean.blanks.df <- pivotproject.df %>%
     filter(Filter == 'blank') %>%
-    group_by(.data$Box, .data$Element) %>% #Box = Infofile Variable
+    group_by(.data$Box, .data$Element) %>%
     summarise(mean_blank = mean(.data$Value))
   adjustedforbl.df <- left_join(pivotproject.df, mean.blanks.df, by = c('Box', 'Element')) %>%
     mutate(net_counts = .data$Value - .data$mean_blank)
@@ -62,31 +52,31 @@ read_XRF <- function(datapath, infopath, setuppath, year){
     pivot_longer(.data$PC:.data$GFF,
                  names_to = 'Filter',
                  values_to = 'Cal.cons')
+  join.df <- left_join(adjustedforbl.df, pivotsetup.df, by = c('Filter', 'Element'))
+
+  calculations.df <- join.df %>%
+    mutate(Value = (.data$net_counts*.data$Cal.cons) * area_filter * (1000 / .data$Volume) / .data$MolarW * 1000 * (.data$Drift_2008/.data[[paste0("Drift_", year)]]))
+
   detectionlimits.df <- setupfile.df %>%
     select(.data$DL_PC:.data$DL_GFF, .data$Element) %>%
     pivot_longer(.data$DL_PC:.data$DL_GFF,
                  names_to = 'Filter',
                  values_to = 'Detection.lim') %>%
     mutate(Filter = str_remove(Filter, 'DL_'))
-  join.df <- left_join(adjustedforbl.df, pivotsetup.df, by = c('Filter', 'Element'))
+  Project.w.detectionlim.df <- left_join(calculations.df, detectionlimits.df, by = c ("Filter", "Element"))
 
-  calculations.df <- join.df %>%
-    mutate(Value = (.data$net_counts*.data$Cal.cons) * 9.078935 * (1000 / .data$Volume) / .data$MolarW * 1000 * (.data$Drift_2008/.data[[paste0("Drift_", year)]]))
-
-  Project.df <- calculations.df %>%
-    select(.data$Sample:.data$Element, .data$Value)
+  Project.df <- Project.w.detectionlim.df %>%
+    select(.data$Sample:.data$Element, .data$Value, .data$Detection.lim)
 
   return(Project.df)
-} #FIX errors!
+} #
 
 #Lisence; MIT or GPL3
 
 # test.df <- XRFmydata('datafile.df')
 # write_csv(test.df, 'test.csv')
 #
-#
 # #OOOBSSSS
-# #######Import
 # datafile.df <- read_delim("Test.TXT", delim = "\t", locale = locale(decimal_mark = ","))
 # datafile2.df <- read_delim("Test2.TXT", delim = "\t", locale = locale(decimal_mark = ","))
 # #OBS: The C is imported differentyl!
@@ -99,7 +89,7 @@ read_XRF <- function(datapath, infopath, setuppath, year){
 #   select(-('C (%)':'As (PPM)')) %>%
 #   select(-starts_with("X")) %>%
 #   rename_all(str_remove, pattern = " .*")
-# #solution;
+# #solution now;
 # datafile.df <- datafile.df %>%
 #   select(-(3:18)) %>%
 #   select(-starts_with("X")) %>%

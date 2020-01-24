@@ -1,11 +1,14 @@
 Package: XRF
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Quick fix on x-ray flouresence planktondata 
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Author: person("Hedda", "Østgaard", email = "heddaost@gmail.com")
+Maintainer: The package maintainer <heddaost@gmail.com>
+Description: Functions to convert the elemental compositon on plankon filters, 
+                measured through x-ray flouresence (XRF), to a readable format.
+                Combines XRF data with a project informaiton file and a instrument setupfile 
+                to adjust for filter blanks, volume of filtrated water etc. 
+                Converts data from kcps to um/L. 
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -16,4 +19,5 @@ Imports:
     readxl,
     readr,
     stringr,
-    rlang
+    rlang,
+    assertr

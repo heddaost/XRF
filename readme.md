@@ -1,13 +1,13 @@
 # XRF
 
-The goal of XRF is to ...
+The goal of XRF is to convert x-ray flouresence (XRF) elemental composition data from kilo counts per second (kpcs) to micro molar per liter (um/L). The code is ueful when investigating the elemental compostion of the microbial community in water samples filtrated through GFF, PC and ANO filters. 
 
 ## Installation
 
-You can install the released version of XRF from [github](https://github.com/heddaost/XRF) with:
+You can install the released version of XRF from [CRAN](https://CRAN.R-project.org) with:
 
 ``` r
-devtools::install_github("heddaost/XRF")
+install.packages("XRF")
 ```
 
 ## Example
@@ -15,6 +15,6 @@ devtools::install_github("heddaost/XRF")
 This is a basic example which shows you how to solve a common problem:
 
 ``` r
-read_XRF(datapath = "data/Test.TXT",  infopath = "data/Infofile.xlsx",
-           setuppath = "data/xrf_setup.xlsx", year = "2019")
+## basic example code
 ```
+

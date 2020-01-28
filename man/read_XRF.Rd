@@ -19,8 +19,13 @@ read_XRF(datapath, infopath, setuppath, year)
 import xrf data
 }
 \examples{
+#\dontrun {
+ # read_XRF(datapath = "data/Test.TXT",  infopath = "data/Infofile.xlsx",
+  #         setuppath = "data/xrf_setup.xlsx", year = "2019")}
+
+# Example with external data
 datadir <- system.file("extdata", package = "XRF")
-  read_XRF(datapath = file.path(datadir, "xrf_rawdata.TXT"),
+read_XRF(datapath = file.path(datadir, "xrf_rawdata.TXT"),
            infopath = file.path(datadir,"project_info.xlsx"),
            setuppath = file.path(datadir,"xrf_setup.xlsx"),
            year = "2019")

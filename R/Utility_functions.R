@@ -12,9 +12,9 @@ return(datafile.df)
 #' @importFrom assertr verify has_all_names
 read_infopath_XRF <- function(infopath){
   infofile.df <- read_excel(infopath) %>%
-  verify(has_all_names("Box", "Filter"))
+  verify(has_all_names("Filter_box_nr", "Filter_type", "Filter_size", "Filter_blank"))
   return(infofile.df)
-} #other function for not in projectfile?
+}
 
 
 

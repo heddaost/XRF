@@ -12,8 +12,13 @@
 #' @importFrom stringr str_remove
 #' @importFrom rlang .data
 #' @examples
+#' #\dontrun {
+#'  # read_XRF(datapath = "data/Test.TXT",  infopath = "data/Infofile.xlsx",
+#'   #         setuppath = "data/xrf_setup.xlsx", year = "2019")}
+#'
+#' # Example with external data
 #' datadir <- system.file("extdata", package = "XRF")
-#'   read_XRF(datapath = file.path(datadir, "xrf_rawdata.TXT"),
+#' read_XRF(datapath = file.path(datadir, "xrf_rawdata.TXT"),
 #'            infopath = file.path(datadir,"project_info.xlsx"),
 #'            setuppath = file.path(datadir,"xrf_setup.xlsx"),
 #'            year = "2019")
@@ -41,18 +46,18 @@ read_XRF <- function(datapath, infopath, setuppath, year){
                  names_to = 'Element',
                  values_to = 'Value')
   mean.blanks.df <- pivotproject.df %>%
-    filter(Filter == 'blank') %>%
-    group_by(.data$Box, .data$Element) %>%
+    filter(.data$Filter_blank == 'blank') %>%
+    group_by(.data$Filter_type, .data$Filter_size, .data$Filter_box_nr, .data$Element) %>%
     summarise(mean_blank = mean(.data$Value))
-  adjustedforbl.df <- left_join(pivotproject.df, mean.blanks.df, by = c('Box', 'Element')) %>%
+  adjustedforbl.df <- left_join(pivotproject.df, mean.blanks.df, by = c('Filter_type', 'Filter_size', 'Filter_box_nr', 'Element')) %>%
     mutate(net_counts = .data$Value - .data$mean_blank)
 
   setupfile.df <- read_excel(setuppath)
   pivotsetup.df <- setupfile.df %>%
     pivot_longer(.data$PC:.data$GFF,
-                 names_to = 'Filter',
+                 names_to = 'Filter_type',
                  values_to = 'Cal.cons')
-  join.df <- left_join(adjustedforbl.df, pivotsetup.df, by = c('Filter', 'Element'))
+  join.df <- left_join(adjustedforbl.df, pivotsetup.df, by = c('Filter_type', 'Element'))
 
   calculations.df <- join.df %>%
     mutate(Value = (.data$net_counts*.data$Cal.cons) * area_filter * (1000 / .data$Volume) / .data$MolarW * 1000 * (.data$Drift_2008/.data[[paste0("Drift_", year)]]))
@@ -60,13 +65,13 @@ read_XRF <- function(datapath, infopath, setuppath, year){
   detectionlimits.df <- setupfile.df %>%
     select(.data$DL_PC:.data$DL_GFF, .data$Element) %>%
     pivot_longer(.data$DL_PC:.data$DL_GFF,
-                 names_to = 'Filter',
-                 values_to = 'Detection.lim') %>%
-    mutate(Filter = str_remove(Filter, 'DL_'))
-  Project.w.detectionlim.df <- left_join(calculations.df, detectionlimits.df, by = c ("Filter", "Element"))
+                 names_to = 'Filter_type',
+                 values_to = 'Detection_lim') %>%
+    mutate(Filter_type = str_remove(.data$Filter_type, 'DL_'))
+  Project.w.detectionlim.df <- left_join(calculations.df, detectionlimits.df, by = c ("Filter_type", "Element"))
 
   Project.df <- Project.w.detectionlim.df %>%
-    select(.data$Sample:.data$Element, .data$Value, .data$Detection.lim)
+    select(.data$Sample:.data$Element, .data$Value, .data$Detection_lim)
 
   return(Project.df)
 } #
